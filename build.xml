@@ -1,0 +1,169 @@
+<project name="RssWebService" basedir="." default="create.war">
+
+	<property name="build.dir" value="build" />
+
+	<property name="build.dir.classes" value="${build.dir}/classes" />
+
+	<property name="build.dir.lib" value="${build.dir}/lib" />
+
+	<property name="axis2.home" value="axis2/axis2-1.6.1" />
+
+	<property name="repository.dir" value="${axis2.home}/repository/services" />
+
+	<property name="repository.lib.dir" value="${axis2.home}/lib" />
+
+	<property name="src.dir" value="src" />
+
+	<property name="src.lib" value="lib" />
+
+	<property name="dist.dir" value="dist" />
+
+	<property name="temp.dir" value="${dist.dir}/temp" />
+
+	<property name="webapp.dir" value="${axis2.home}/webapp" />
+
+	<path id="build.class.path">
+		<fileset dir="${axis2.home}/lib">
+			<include name="*.jar" />
+		</fileset>
+		<fileset dir="${src.lib}">
+			<include name="*.jar" />
+		</fileset>
+
+	</path>
+
+	<path id="client.class.path">
+		<fileset dir="${axis2.home}/lib">
+			<include name="*.jar" />
+		</fileset>
+		<fileset dir="${build.dir.lib}">
+			<include name="*.jar" />
+		</fileset>
+		<fileset dir="${src.lib}">
+			<include name="*.jar" />
+		</fileset>
+
+	</path>
+	<target name="clean">
+		<delete dir="${build.dir}" />
+		<delete dir="${dist.dir}" />
+		<delete file="${repository.dir}/RssWebService.aar" />
+		<delete file="${repository.lib.dir}/RssWebService.jar" />
+	</target>
+
+	<target name="prepare">
+
+		<mkdir dir="${build.dir}" />
+
+		<mkdir dir="${build.dir.classes}" />
+
+		<mkdir dir="${build.dir.lib}" />
+
+		<mkdir dir="${build.dir.classes}/META-INF" />
+
+	</target>
+
+	<target name="generate.service" depends="clean,prepare">
+
+		<copy file="${src.dir}/META-INF/services.xml" tofile="${build.dir.classes}/META-INF/services.xml"
+			overwrite="true" />
+<!--		<copy file="${src.dir}/META-INF/RssWebservice.wsdl" tofile="${build.dir.classes}/META-INF/RssWebservice.wsdl"
+			overwrite="true" />	
+-->			
+		<copy todir="${build.dir.classes}">
+			<fileset dir="${src.dir}" includes="*.xml" />
+		</copy>
+
+		<javac srcdir="${src.dir}" destdir="${build.dir.classes}" includes="reyes/melanio/**">
+			<classpath refid="build.class.path" />
+		</javac>
+		<jar basedir="${build.dir.classes}" destfile="${build.dir}/RssWebService.aar" />
+		<jar basedir="${build.dir.classes}" destfile="${build.dir}/RssWebService.jar" />
+
+		<copy file="${build.dir}/RssWebService.aar" tofile="${repository.dir}/RssWebService.aar"
+			overwrite="true" />
+		<copy file="${build.dir}/RssWebService.jar" tofile="${repository.lib.dir}/RssWebService.jar"
+			overwrite="true" />
+
+	</target>
+
+	<target name="init.war">
+		<mkdir dir="${dist.dir}" />
+		<mkdir dir="${temp.dir}" />
+		<copy toDir="${repository.lib.dir}" overwrite="true">
+			<fileset dir="${src.lib}">
+				<include name="**/**" />
+			</fileset>
+		</copy>
+		<copy toDir="${temp.dir}">
+			<fileset dir="${webapp.dir}">
+				<include name="**/**" />
+				<exclude name="**/web.xml" />
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="prepare.repo" depends="init.war">
+
+		<!-- Copying the axis2 repository from ../repository -->
+		<copy toDir="${temp.dir}/WEB-INF">
+			<fileset dir="${axis2.home}/repository">
+				<include name="**/**" />
+			</fileset>
+		</copy>
+
+		<!-- Creating the services.list -->
+		<path id="services.archives">
+			<fileset dir="${temp.dir}/WEB-INF/services">
+				<include name="*.aar" />
+			</fileset>
+		</path>
+
+
+		<pathconvert pathsep="${line.separator}" property="echo.services.archives"
+			refid="services.archives">
+			<flattenmapper />
+		</pathconvert>
+
+		<echo file="${temp.dir}/WEB-INF/services/services.list" message="${echo.services.archives}" />
+
+		<!-- Creating the modules.list -->
+		<path id="modules.archives">
+			<fileset dir="${temp.dir}/WEB-INF/modules">
+				<include name="*.mar" />
+			</fileset>
+		</path>
+		<pathconvert pathsep="${line.separator}" property="echo.modules.archives"
+			refid="modules.archives">
+			<flattenmapper />
+		</pathconvert>
+		<echo file="${temp.dir}/WEB-INF/modules/modules.list" message="${echo.modules.archives}" />
+
+		<!-- Copying the axis2.xml from ../conf -->
+		<mkdir dir="${temp.dir}/WEB-INF/conf" />
+		<copy file="${axis2.home}/conf/axis2.xml" toDir="${temp.dir}/WEB-INF/conf" />
+
+	</target>
+
+	<target name="create.war" depends="generate.service,init.war,prepare.repo">
+
+		<war destfile="${dist.dir}/axis2.war" webxml="${axis2.home}/webapp/WEB-INF/web.xml">
+			<lib dir="${axis2.home}/lib">
+				<include name="**" />
+				<exclude name="**servlet**" />
+				<exclude name="ant*.jar" />
+				<exclude name="axis2-adb-codegen*.jar" />
+				<!-- codegen is required for Rampart because of AXIS2-4265 -->
+				<!-- exclude name="axis2-codegen*.jar"/ -->
+				<exclude name="jibx-bind*.jar" />
+			</lib>
+			<webinf dir="${temp.dir}/WEB-INF" />
+			<fileset dir="${temp.dir}">
+				<include name="**/axis2-web/**" />
+			</fileset>
+		</war>
+		<delete dir="${temp.dir}" />
+
+	</target>
+
+</project>

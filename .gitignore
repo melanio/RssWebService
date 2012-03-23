@@ -1,0 +1,5 @@
+*.swp
+*~
+classes/*
+dist/*
+build/*

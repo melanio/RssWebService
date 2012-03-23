@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC 
+	"-//Hibernate/Hibernate Mapping DTD 3.0//EN" 
+	"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd" >
+<hibernate-mapping package="reyes.melanio.portfolio.rsswebservice.data">
+	<class name="Feed" table="Feed">
+		<meta attribute="sync-DAO">false</meta>
+		<cache usage="read-write"/>	
+		<id name="id" type="java.lang.Long" column="id">
+			<generator class="identity"/>
+		</id>		
+		<property name="urlString" column="url_string" type="string" not-null="false" length="250" />
+		<set name="FeedItems" table="feeditems" inverse="true" cascade="all-delete-orphan" >
+			<cache usage="read-write"/>	
+			<key column="feedid"/>
+			<one-to-many class="FeedItem" not-found="ignore" />
+		</set>
+	</class>
+</hibernate-mapping>
