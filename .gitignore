@@ -3,3 +3,6 @@
 classes/*
 dist/*
 build/*
+.settings/*
+.project
+.classpath
