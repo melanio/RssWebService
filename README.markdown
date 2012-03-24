@@ -7,7 +7,5 @@ I believe this to be a good working example on how to get started with creating 
 
 Author: Melanio Reyes
 
-email: <melanio@gmail.com></code>
-
 github: <https://github.com/melanio/RssWebService/>
 
